@@ -2,6 +2,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    /* Prevent tap highlight on iOS */
+    touch-action: manipulation;
+    /* Optimize for touch */
 }
 
 body {
@@ -23,6 +27,8 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     max-width: 100%;
+    position: relative;
+    border: 2px solid #000;
 }
 
 h1 {
@@ -32,9 +38,11 @@ h1 {
 }
 
 #gameCanvas {
-    border: 1px solid #ddd;
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
     background-color: white;
-    margin-bottom: 20px;
+    margin: 10px 0;
+    width: 100%;
 }
 
 .turn-message {
@@ -65,7 +73,8 @@ h1 {
 
 .player-yellow {
     color: #ffff00;
-    text-shadow: 0 0 2px #000; /* Add shadow for better visibility */
+    text-shadow: 0 0 2px #000;
+    /* Add shadow for better visibility */
 }
 
 /* Game over message */
@@ -80,26 +89,68 @@ h1 {
 }
 
 @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* Responsive design */
 @media (max-width: 600px) {
-    .game-container {
-        padding: 10px;
-    }
-    
-    h1 {
-        font-size: 1.5rem;
-    }
-    
     #gameCanvas {
-        max-width: 100%;
+        max-width: 95vw;
+        max-height: 70vh;
+        touch-action: none;
     }
-    
+
+    .game-container {
+        padding: 5px;
+        min-height: 100vh;
+        width: 100vw;
+        border-radius: 0;
+        border: none;
+    }
+
     .turn-message {
-        font-size: 1rem;
+        top: 10px;
+        font-size: 0.9rem;
+        padding: 6px 12px;
     }
+}
+
+/* Mobile orientation handling */
+@media (max-width: 600px) and (orientation: portrait) {
+    #gameCanvas {
+        max-height: 60vh;
+    }
+
+    h1 {
+        font-size: 1.2rem;
+    }
+}
+
+/* Prevent text selection during gameplay */
+.game-container {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.turn-message {
+    font-size: 1rem;
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 8px 15px;
+    border: 2px solid #000;
+    border-radius: 25px;
+    white-space: nowrap;
 }
