@@ -1,44 +1,64 @@
-// Constants matching the original Rust implementation
-const ROWS = 8;
-const COLS = 8;
-const CELL_SIZE = 50;
-const PLAYERS = 4;
-const ANIMATION_DURATION = 100; // in milliseconds
-const BOARD_MARGIN = 0.2 * CELL_SIZE;
-const TARGET_FPS = 90; // Target 90 FPS for smoother animations
-const FRAME_TIME = 1000 / TARGET_FPS; // Time per frame in milliseconds
+// Game board configuration constants
+const ROWS = 8;                    // Number of rows in the game grid
+const COLS = 8;                    // Number of columns in the game grid
+const CELL_SIZE = 50;              // Size of each cell in pixels
+const PLAYERS = 4;                 // Number of players in the game
+const ANIMATION_DURATION = 100;    // Duration of animations in milliseconds
+const BOARD_MARGIN = 0.2 * CELL_SIZE; // Margin around the board in pixels
+const TARGET_FPS = 90;             // Target 90 FPS for smoother animations
+const FRAME_TIME = 1000 / TARGET_FPS; // Time per frame in milliseconds for consistent game speed
 
-// Game state
+/**
+ * GameState Class - Core Game Engine
+ * Manages all game rules, player turns, and state transitions. Key responsibilities:
+ * 1. Maintaining board state through 2D grid representation
+ * 2. Processing player moves and validating game rules
+ * 3. Managing chain reaction propagation through BFS algorithm
+ * 4. Tracking player states (active/inactive) and game phase
+ * 5. Coordinating with GameRenderer for visual updates
+ * 
+ * The class follows a strict turn sequence with player order randomization
+ * and implements fail-safe checks for game integrity.
+ */
 class GameState {
+    /**
+     * Initialize the game state with default values
+     * Sets up the game grid, player order, and initial conditions
+     */
     constructor() {
-        this.grid = [];
-        this.players = PLAYERS;
-        this.currentPlayer = 0;
-        this.animations = [];
-        this.playerOrder = this.shuffleArray([0, 1, 2, 3]);
-        this.turnNumber = 0;
+        // Core game state properties
+        this.grid = [];                              // 2D array representing the game board
+        this.players = PLAYERS;                      // Number of players in the game
+        this.currentPlayer = 0;                      // Current player's index
+        this.animations = [];                        // Tracks active animations
+        this.playerOrder = this.shuffleArray([0, 1, 2, 3]); // Randomized player order
+        this.turnNumber = 0;                         // Current turn number
+
+        // UI and game flow properties
         this.turnMessages = [
             "Red player's turn - Place your tile!",
             "Green player's turn - Place your tile!",
             "Blue player's turn - Place your tile!",
             "Yellow player's turn - Place your tile!"
         ];
-        this.firstMoves = [true, true, true, true];
-        this.playersAlive = [true, true, true, true];
-        this.gameOver = false;
-        this.winner = null;
 
-        // Initialize the grid
+        // Game state tracking
+        this.firstMoves = [true, true, true, true];  // Tracks if each player has made their first move
+        this.playersAlive = [true, true, true, true]; // Tracks which players are still in the game
+        this.gameOver = false;                       // Flag for game end state
+        this.winner = null;                          // Stores the winner's index when game ends
+
+        // Initialize the grid with empty cells
         for (let r = 0; r < ROWS; r++) {
             this.grid[r] = [];
             for (let c = 0; c < COLS; c++) {
                 this.grid[r][c] = {
-                    owner: null,
-                    power: 0,
-                    animationStart: null,
-                    animationFrom: null,
-                    isExploding: false,
-                    animationDelay: 0
+                    owner: null,                     // Player who owns this cell (null if empty)
+                    power: 0,                        // Current power level of the cell
+                    animationStart: null,            // Timestamp when animation started
+                    animationFrom: null,             // Source coordinates for animation
+                    isExploding: false,              // Whether cell is currently exploding
+                    animationDelay: 0                // Delay before animation starts (for chain reactions)
                 };
             }
         }
@@ -47,7 +67,12 @@ class GameState {
         this.currentPlayer = this.playerOrder[0];
     }
 
-    // Shuffle array using Fisher-Yates algorithm
+    /**
+     * Shuffle array using Fisher-Yates algorithm
+     * Creates a random order of players for fair gameplay
+     * @param {Array} array - The array to shuffle (player indices)
+     * @returns {Array} A new shuffled array
+     */
     shuffleArray(array) {
         const newArray = [...array];
         for (let i = newArray.length - 1; i > 0; i--) {
@@ -57,18 +82,28 @@ class GameState {
         return newArray;
     }
 
-    // Get player color
+    /**
+     * Get the color associated with a player
+     * Maps player index to a hex color code for rendering
+     * @param {number} player - Player index (0-3)
+     * @returns {string} Hex color code
+     */
     getPlayerColor(player) {
         switch (player) {
             case 0: return '#FF0000'; // Red
             case 1: return '#00FF00'; // Green
             case 2: return '#0000FF'; // Blue
             case 3: return '#FFFF00'; // Yellow
-            default: return '#FFFFFF'; // White
+            default: return '#FFFFFF'; // White (fallback)
         }
     }
 
-    // Get player name
+    /**
+     * Get the name associated with a player
+     * Maps player index to a readable name for UI display
+     * @param {number} player - Player index (0-3)
+     * @returns {string} Player name
+     */
     getPlayerName(player) {
         switch (player) {
             case 0: return 'Red';
@@ -79,30 +114,62 @@ class GameState {
         }
     }
 
-    // Get valid neighboring cells
+    /**
+     * Get valid neighboring cells (up, down, left, right)
+     * Used for chain reactions and determining where power spreads
+     * @param {number} row - Row index of the cell
+     * @param {number} col - Column index of the cell
+     * @returns {Array} Array of [row, col] pairs representing neighboring cells
+     */
     getNeighbors(row, col) {
         const neighbors = [];
-        if (row > 0) neighbors.push([row - 1, col]);
-        if (row < ROWS - 1) neighbors.push([row + 1, col]);
-        if (col > 0) neighbors.push([row, col - 1]);
-        if (col < COLS - 1) neighbors.push([row, col + 1]);
+        if (row > 0) neighbors.push([row - 1, col]);           // Top neighbor
+        if (row < ROWS - 1) neighbors.push([row + 1, col]);    // Bottom neighbor
+        if (col > 0) neighbors.push([row, col - 1]);           // Left neighbor
+        if (col < COLS - 1) neighbors.push([row, col + 1]);    // Right neighbor
         return neighbors;
     }
 
-    // Get maximum capacity for a cell
+    /**
+     * Get maximum capacity for a cell before it explodes
+     * In this implementation, all cells have the same capacity
+     * @param {number} row - Row index of the cell
+     * @param {number} col - Column index of the cell
+     * @returns {number} Maximum power capacity
+     */
     maxCapacity(row, col) {
         return 4; // Fixed capacity of 4 for all cells
     }
 
-    // Check if any players have been eliminated
+    /**
+     * Check if any players have been eliminated from the game
+     * A player is eliminated when they no longer control any cells on the board
+     * This is called after each move to determine if the game should end
+     */
+    /**
+     * Player Elimination Check
+     * Implements elimination logic through grid analysis:
+     * 1. Skips check during initial placement phase
+     * 2. Performs full grid scan for each player's tiles
+     * 3. Updates playersAlive state array
+     * 4. Triggers game end condition when only 1 player remains
+     * 
+     * Elimination Rules:
+     * - Players get eliminated when they lose all tiles
+     * - First move protection prevents immediate elimination
+     * - Last remaining player is declared winner
+     */
     checkElimination() {
         // Only check for elimination if all players have made their first move
+        // This ensures players aren't eliminated before they've had a chance to play
         if (this.firstMoves.some(firstMove => firstMove)) {
             return;
         }
 
+        // Check each player to see if they still have tiles on the board
         for (let player = 0; player < this.players; player++) {
             let playerHasTiles = false;
+            // Search the entire grid for cells owned by this player
             for (let row = 0; row < ROWS; row++) {
                 for (let col = 0; col < COLS; col++) {
                     if (this.grid[row][col].owner === player) {
@@ -112,56 +179,92 @@ class GameState {
                 }
                 if (playerHasTiles) break;
             }
+            // Update player's alive status based on whether they have any tiles
             this.playersAlive[player] = playerHasTiles;
         }
 
+        // Count how many players are still alive
         const aliveCount = this.playersAlive.filter(alive => alive).length;
+        // If only one player remains, they are the winner
         if (aliveCount === 1) {
             this.winner = this.playersAlive.findIndex(alive => alive);
             this.gameOver = true;
-            this.updateTurnMessage();
+            this.updateTurnMessage(); // Update UI to show winner
         }
     }
 
-    // Place a tile at the specified position
+    /**
+     * Place a tile at the specified position on the grid
+     * This is the main interaction method called when a player makes a move
+     * @param {number} row - Row index where the tile is being placed
+     * @param {number} col - Column index where the tile is being placed
+     */
     placeTile(row, col) {
+        // Don't allow moves if the game is already over
         if (this.gameOver) return;
 
         const cell = this.grid[row][col];
         const isFirstMove = this.firstMoves[this.currentPlayer];
 
+        // Game rules for valid moves:
         // First move: can only place in empty cells
         // Subsequent moves: must use existing circles of the current player
         if ((isFirstMove && cell.owner === null) ||
             (!isFirstMove && cell.owner === this.currentPlayer)) {
 
+            // Update cell ownership and power
             cell.owner = this.currentPlayer;
             if (isFirstMove) {
-                cell.power = 3;
-                this.firstMoves[this.currentPlayer] = false;
+                cell.power = 3;                           // First move gets 3 power
+                this.firstMoves[this.currentPlayer] = false; // Mark first move as completed
             } else {
-                cell.power += 1;
+                cell.power += 1;                          // Subsequent moves add 1 power
             }
 
+            // Check for chain reactions and player eliminations
             this.checkExplosions();
             this.checkElimination();
 
+            // If game isn't over, advance to the next player's turn
             if (!this.gameOver) {
                 this.turnNumber = (this.turnNumber + 1) % this.players;
                 this.currentPlayer = this.playerOrder[this.turnNumber];
 
-                // Skip eliminated players
+                // Skip eliminated players when determining next turn
                 while (!this.playersAlive[this.currentPlayer]) {
                     this.turnNumber = (this.turnNumber + 1) % this.players;
                     this.currentPlayer = this.playerOrder[this.turnNumber];
                 }
 
+                // Update the UI to show whose turn it is
                 this.updateTurnMessage();
             }
         }
     }
 
-    // Process chain reactions when cells exceed their power capacity
+    /**
+ * Chain Reaction Processor - BFS Implementation
+ * 1. Detects overcapacity cells using threshold check (power >= 4)
+ * 2. Uses breadth-first search to propagate explosions
+ * 3. Manages animation states for smooth visual transitions
+ * 4. Handles power redistribution to neighboring cells
+ * 5. Tracks wave propagation delays for staggered animations
+ */
+    /**
+     * Chain Reaction Engine
+     * Processes explosions using BFS algorithm with:
+     * 1. Initial overcapacity cell detection (power >= 4)
+     * 2. Wave-based propagation queue
+     * 3. Animation state management
+     * 4. Power redistribution logic
+     * 5. Neighbor ownership transfer
+     * 
+     * Key Mechanics:
+     * - Each explosion wave adds 100ms animation delay
+     * - Exploded cells reset power and ownership
+     * - Neighbors gain +1 power and change ownership
+     * - Overcapacity neighbors trigger subsequent waves
+     */
     checkExplosions() {
         const queue = [];
         const wave = 0;
@@ -230,7 +333,17 @@ class GameState {
     }
 }
 
-// Game renderer class
+/**
+ * GameRenderer Class - Visualization System
+ * Handles all visual aspects of the game including:
+ * 1. Canvas rendering optimized for 90 FPS performance
+ * 2. Responsive layout management for cross-device support
+ * 3. Animation interpolation for smooth transitions
+ * 4. Input handling unification (touch + mouse)
+ * 5. Real-time FPS monitoring and adaptive rendering
+ * 
+ * Coordinates with GameState through observer pattern for state updates
+ */
 class GameRenderer {
     constructor(canvas, gameState) {
         this.canvas = canvas;
@@ -262,7 +375,15 @@ class GameRenderer {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    // Main game loop optimized for 90 FPS
+    /**
+ * Game Loop - Core Rendering Pipeline
+ * Implements frame-rate controlled updates with:
+ * 1. Delta time calculation for smooth animations
+ * 2. FPS monitoring and adaptive rendering
+ * 3. Dirty rectangle optimization for efficient redraws
+ * 4. Hardware-accelerated canvas operations
+ * 5. Coordinated animation timing with GameState
+ */
     gameLoop(timestamp) {
         // Calculate delta time
         const deltaTime = timestamp - this.lastFrameTime;
@@ -392,7 +513,21 @@ class GameRenderer {
         }
     }
 
-    // Resize canvas based on device and window size
+    /**
+     * Responsive Canvas Management
+     * Implements adaptive layout system with:
+     * 1. Device detection (mobile/desktop)
+     * 2. Dynamic cell size calculation
+     * 3. Margin scaling preservation
+     * 4. Canvas dimension updates
+     * 5. Display density optimization
+     * 
+     * Scaling Logic:
+     * - Maintains aspect ratio across devices
+     * - Uses container-relative sizing
+     * - Applies minimum 12px font size constraint
+     * - Stores scaled values for input coordination
+     */
     resizeCanvas() {
         const container = document.querySelector('.game-container');
         const maxWidth = container.clientWidth - 40; // Account for padding
@@ -428,7 +563,21 @@ class GameRenderer {
         this.processInput(x, y);
     }
 
-    // Handle touch events for mobile devices
+    /**
+     * Mobile Input Handler
+     * Processes touch events with:
+     * 1. Scroll prevention
+     * 2. Multi-touch support
+     * 3. Coordinate normalization
+     * 4. Touch-to-grid mapping
+     * 5. Event propagation control
+     * 
+     * Implementation Details:
+     * - Uses touchstart instead of touchend for faster response
+     * - Accounts for CSS transforms in coordinate calculation
+     * - Supports simultaneous touch points
+     * - Integrates with core input processor
+     */
     handleTouch(event) {
         event.preventDefault(); // Prevent scrolling when touching the canvas
 
