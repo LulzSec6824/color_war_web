@@ -4,7 +4,7 @@ const COLS = 8;
 const CELL_SIZE = 50;
 const PLAYERS = 4;
 const ANIMATION_DURATION = 100; // in milliseconds
-const BOARD_MARGIN = 0.5 * CELL_SIZE;
+const BOARD_MARGIN = 0.2 * CELL_SIZE;
 const TARGET_FPS = 90; // Target 90 FPS for smoother animations
 const FRAME_TIME = 1000 / TARGET_FPS; // Time per frame in milliseconds
 
