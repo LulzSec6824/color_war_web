@@ -43,6 +43,16 @@ h1 {
     background-color: white;
     margin: 10px 0;
     width: 100%;
+    height: 70vh;
+
+    canvas {
+        transform: translateZ(0);
+        will-change: transform;
+        image-rendering: crisp-edges;
+        touch-action: none;
+        width: 100%;
+        height: 100%;
+    }
 }
 
 .turn-message {
@@ -143,14 +153,11 @@ h1 {
 }
 
 .turn-message {
-    font-size: 1rem;
-    position: absolute;
-    top: -40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    padding: 8px 15px;
-    border: 2px solid #000;
-    border-radius: 25px;
-    white-space: nowrap;
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    margin-top: 15px;
+    width: 100%;
+    max-width: 300px;
 }

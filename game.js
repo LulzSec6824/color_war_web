@@ -347,17 +347,27 @@ class GameState {
 class GameRenderer {
     constructor(canvas, gameState) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        this.ctx = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') || canvas.getContext('2d');
         this.gameState = gameState;
         this.isMobile = this.detectMobile();
+
+        // Enable GPU optimizations
+        this.canvas.style.transform = 'translateZ(0)';
+        this.canvas.style.willChange = 'transform';
+        this.canvas.style.imageRendering = 'crisp-edges';
 
         // Set canvas size based on device
         this.resizeCanvas();
         window.addEventListener('resize', this.resizeCanvas.bind(this));
 
         // Bind event handlers for both mouse and touch
-        this.canvas.addEventListener('click', this.handleClick.bind(this));
-        this.canvas.addEventListener('touchstart', this.handleTouch.bind(this), { passive: false });
+        // Initialize event listeners with touch support
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+        this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
+        this.canvas.addEventListener('touchend', () => this.handleTouchEnd());
 
         // Start game loop with optimized timing for 90 FPS
         this.lastFrameTime = 0;
@@ -529,38 +539,29 @@ class GameRenderer {
      * - Stores scaled values for input coordination
      */
     resizeCanvas() {
-        const container = document.querySelector('.game-container');
-        const maxWidth = container.clientWidth - 40; // Account for padding
-
-        let cellSize = CELL_SIZE;
-        let boardMargin = BOARD_MARGIN;
-
-        // Adjust cell size for mobile devices
-        if (this.isMobile || window.innerWidth < 600) {
-            const scaleFactor = Math.min(1, maxWidth / ((COLS * CELL_SIZE) + (2 * BOARD_MARGIN)));
-            cellSize = Math.floor(CELL_SIZE * scaleFactor);
-            boardMargin = Math.floor(BOARD_MARGIN * scaleFactor);
-        }
-
-        this.canvas.width = (COLS * cellSize) + (2 * boardMargin);
-        this.canvas.height = (ROWS * cellSize) + (2 * boardMargin);
-
-        // Store current scale factors for input handling
-        this.cellSizeScaled = cellSize;
-        this.boardMarginScaled = boardMargin;
-
-        // Force redraw after resize
-        this.drawBoard();
+        const dpr = window.devicePixelRatio || 1;
+        const rect = this.canvas.getBoundingClientRect();
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = rect.height * dpr;
+        this.ctx.scale(dpr, dpr);
     }
 
-    // Handle mouse click events
-    handleClick(event) {
-        event.preventDefault();
+    handleMouseDown(e) {
+        if (this.gameState.gameOver) return;
         const rect = this.canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         this.processInput(x, y);
+    }
+
+    handleTouchStart(e) {
+        if (this.gameState.gameOver) return;
+        const rect = this.canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        this.processInput(x, y);
+        e.preventDefault();
     }
 
     /**
@@ -605,6 +606,23 @@ class GameRenderer {
 // Initialize the game when the page loads
 window.addEventListener('load', () => {
     const canvas = document.getElementById('gameCanvas');
+    const container = document.querySelector('.game-container');
+
+    // Calculate dimensions based on grid size and container
+    const aspectRatio = COLS / ROWS;
+    const maxWidth = container.clientWidth - 40;
+    const maxHeight = window.innerHeight * 0.7;
+    const scale = Math.min(maxWidth / (COLS * CELL_SIZE), maxHeight / (ROWS * CELL_SIZE));
+
+    // Set canvas dimensions
+    canvas.width = COLS * CELL_SIZE * scale * window.devicePixelRatio;
+    canvas.height = ROWS * CELL_SIZE * scale * window.devicePixelRatio;
+    canvas.style.width = `${COLS * CELL_SIZE * scale}px`;
+    canvas.style.height = `${ROWS * CELL_SIZE * scale}px`;
+
+    // Configure context
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale * window.devicePixelRatio, scale * window.devicePixelRatio);
     const gameState = new GameState();
     const renderer = new GameRenderer(canvas, gameState);
 });
