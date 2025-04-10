@@ -46,7 +46,7 @@ This is a web-based implementation of the Color War chain reaction game, ported 
 2. Open the `index.html` file in any modern web browser
 3. Start playing immediately!
 
-# License
+## License
 
 Copyright (C) 2023 LulzSec6824
 
