@@ -7,6 +7,7 @@ const ANIMATION_DURATION = 100;    // Duration of animations in milliseconds
 const BOARD_MARGIN = 0.2 * CELL_SIZE; // Margin around the board in pixels
 const TARGET_FPS = 90;             // Target 90 FPS for smoother animations
 const FRAME_TIME = 1000 / TARGET_FPS; // Time per frame in milliseconds for consistent game speed
+const CANVAS_BASE_SIZE = 400; // Base canvas size for scaling calculations
 
 /**
  * GameState Class - Core Game Engine
@@ -544,13 +545,18 @@ class GameRenderer {
         this.canvas.width = rect.width * dpr;
         this.canvas.height = rect.height * dpr;
         this.ctx.scale(dpr, dpr);
+
+        // Calculate scaled layout values
+        this.boardMarginScaled = (BOARD_MARGIN * rect.width) / CANVAS_BASE_SIZE;
+        this.cellSizeScaled = (CELL_SIZE * rect.width) / CANVAS_BASE_SIZE;
     }
 
     handleMouseDown(e) {
         if (this.gameState.gameOver) return;
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const dpr = window.devicePixelRatio || 1;
+        const x = (e.clientX - rect.left) / dpr;
+        const y = (e.clientY - rect.top) / dpr;
         this.processInput(x, y);
     }
 
@@ -594,8 +600,14 @@ class GameRenderer {
 
     // Process input coordinates and place tile
     processInput(x, y) {
-        const row = Math.floor((y - this.boardMarginScaled) / this.cellSizeScaled);
-        const col = Math.floor((x - this.boardMarginScaled) / this.cellSizeScaled);
+        const safeMargin = this.boardMarginScaled || BOARD_MARGIN;
+        const safeCellSize = this.cellSizeScaled || CELL_SIZE;
+        const dpr = window.devicePixelRatio || 1;
+        const scaledX = x * dpr;
+        const scaledY = y * dpr;
+        const scaledSafeMargin = safeMargin * dpr;
+        const row = Math.floor((scaledY - scaledSafeMargin) / (safeCellSize * dpr));
+        const col = Math.floor((scaledX - scaledSafeMargin) / (safeCellSize * dpr));
 
         if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
             this.gameState.placeTile(row, col);
