@@ -270,6 +270,9 @@ class GameState {
         const queue = [];
         const wave = 0;
 
+        // Clear old animations to prevent memory leaks
+        this.animations = [];
+
         // Find cells that need to explode
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
@@ -308,7 +311,13 @@ class GameState {
                 }
             }
 
+            // Track animation for rendering
             this.animations.push([r, c, [sourceX, sourceY]]);
+
+            // Limit maximum animations to prevent memory issues
+            if (this.animations.length > 100) {
+                this.animations = this.animations.slice(-100);
+            }
         }
     }
 
@@ -348,7 +357,7 @@ class GameState {
 class GameRenderer {
     constructor(canvas, gameState) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') || canvas.getContext('2d');
+        this.ctx = canvas.getContext('2d');
         this.gameState = gameState;
         this.isMobile = this.detectMobile();
 
@@ -362,13 +371,12 @@ class GameRenderer {
         window.addEventListener('resize', this.resizeCanvas.bind(this));
 
         // Bind event handlers for both mouse and touch
-        // Initialize event listeners with touch support
-        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
-        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
-        this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
-        this.canvas.addEventListener('touchend', () => this.handleTouchEnd());
+        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
 
         // Start game loop with optimized timing for 90 FPS
         this.lastFrameTime = 0;
@@ -415,8 +423,39 @@ class GameRenderer {
         // Draw board with optimized rendering
         this.drawBoard();
 
+        // Clean up completed animations to prevent memory leaks
+        this.cleanupAnimations();
+
         // Request next frame with timing control for 90 FPS
         requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    // Clean up completed animations to prevent memory leaks
+    cleanupAnimations() {
+        // Check all cells for completed animations
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = this.gameState.grid[r][c];
+                if (cell.animationStart !== null) {
+                    const progress = this.gameState.getAnimationProgress(cell.animationStart, cell.animationDelay);
+                    if (progress >= 1.0) {
+                        cell.animationStart = null;
+                        cell.animationFrom = null;
+                        cell.isExploding = false;
+                        cell.animationDelay = 0;
+                    }
+                }
+            }
+        }
+
+        // Clean up the animations array in gameState
+        if (this.gameState.animations.length > 0) {
+            this.gameState.animations = this.gameState.animations.filter(anim => {
+                const [r, c] = anim;
+                const cell = this.gameState.grid[r][c];
+                return cell.animationStart !== null;
+            });
+        }
     }
 
     // Draw the game board with optimized rendering for 90 FPS
@@ -539,35 +578,81 @@ class GameRenderer {
      * - Applies minimum 12px font size constraint
      * - Stores scaled values for input coordination
      */
+    /**
+     * Responsive Canvas Management
+     * Implements adaptive layout system with:
+     * 1. Device detection (mobile/desktop)
+     * 2. Dynamic cell size calculation
+     * 3. Margin scaling preservation
+     * 4. Canvas dimension updates
+     * 5. Display density optimization
+     * 
+     * Scaling Logic:
+     * - Maintains aspect ratio across devices
+     * - Uses container-relative sizing
+     * - Applies minimum 12px font size constraint
+     * - Stores scaled values for input coordination
+     * - Properly handles device pixel ratio for crisp rendering
+     */
     resizeCanvas() {
+        const container = document.querySelector('.game-container');
+        const maxWidth = container.clientWidth - 40; // Account for padding
         const dpr = window.devicePixelRatio || 1;
-        const rect = this.canvas.getBoundingClientRect();
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
+
+        let cellSize = CELL_SIZE;
+        let boardMargin = BOARD_MARGIN;
+
+        // Adjust cell size for mobile devices
+        if (this.isMobile || window.innerWidth < 600) {
+            const scaleFactor = Math.min(1, maxWidth / ((COLS * CELL_SIZE) + (2 * BOARD_MARGIN)));
+            cellSize = Math.floor(CELL_SIZE * scaleFactor);
+            boardMargin = Math.floor(BOARD_MARGIN * scaleFactor);
+        }
+
+        // Calculate logical size (CSS pixels)
+        const logicalWidth = (COLS * cellSize) + (2 * boardMargin);
+        const logicalHeight = (ROWS * cellSize) + (2 * boardMargin);
+
+        // Set CSS size
+        this.canvas.style.width = `${logicalWidth}px`;
+        this.canvas.style.height = `${logicalHeight}px`;
+
+        // Reset any previous transformations
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        // Set actual canvas size in memory (scaled for retina displays)
+        this.canvas.width = logicalWidth * dpr;
+        this.canvas.height = logicalHeight * dpr;
+
+        // Scale all drawing operations by the device pixel ratio
         this.ctx.scale(dpr, dpr);
 
-        // Calculate scaled layout values
-        this.boardMarginScaled = (BOARD_MARGIN * rect.width) / CANVAS_BASE_SIZE;
-        this.cellSizeScaled = (CELL_SIZE * rect.width) / CANVAS_BASE_SIZE;
+        // Store current scale factors for input handling
+        this.cellSizeScaled = cellSize;
+        this.boardMarginScaled = boardMargin;
+        this.dpr = dpr; // Store DPR for consistent use in input handlers
+
+        // Force redraw after resize
+        this.drawBoard();
     }
 
     handleMouseDown(e) {
         if (this.gameState.gameOver) return;
         const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const x = (e.clientX - rect.left) / dpr;
-        const y = (e.clientY - rect.top) / dpr;
+        const x = (e.clientX - rect.left);
+        const y = (e.clientY - rect.top);
         this.processInput(x, y);
     }
 
-    handleTouchStart(e) {
-        if (this.gameState.gameOver) return;
-        const rect = this.canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        this.processInput(x, y);
-        e.preventDefault();
+    handleMouseMove(e) {
+        // Just prevent default behavior to avoid any browser-specific issues
+        // This helps prevent freezing on some browsers when moving the mouse
+        if (e.preventDefault) e.preventDefault();
+    }
+
+    handleMouseUp(e) {
+        // Empty handler to prevent errors, since we bind it in the constructor
+        // Having this defined prevents potential null reference errors
     }
 
     /**
@@ -585,7 +670,7 @@ class GameRenderer {
      * - Supports simultaneous touch points
      * - Integrates with core input processor
      */
-    handleTouch(event) {
+    handleTouchStart(event) {
         event.preventDefault(); // Prevent scrolling when touching the canvas
 
         if (event.touches.length > 0) {
@@ -598,16 +683,25 @@ class GameRenderer {
         }
     }
 
+    handleTouchMove(event) {
+        event.preventDefault();
+        // Prevent default to avoid scrolling issues on mobile
+    }
+
+    handleTouchEnd(event) {
+        // Prevent any default browser behavior
+        if (event && event.preventDefault) event.preventDefault();
+    }
+
     // Process input coordinates and place tile
     processInput(x, y) {
         const safeMargin = this.boardMarginScaled || BOARD_MARGIN;
         const safeCellSize = this.cellSizeScaled || CELL_SIZE;
-        const dpr = window.devicePixelRatio || 1;
-        const scaledX = x * dpr;
-        const scaledY = y * dpr;
-        const scaledSafeMargin = safeMargin * dpr;
-        const row = Math.floor((scaledY - scaledSafeMargin) / (safeCellSize * dpr));
-        const col = Math.floor((scaledX - scaledSafeMargin) / (safeCellSize * dpr));
+
+        // Calculate row and col directly from input coordinates
+        // No need to apply devicePixelRatio here as getBoundingClientRect already accounts for it
+        const row = Math.floor((y - safeMargin) / safeCellSize);
+        const col = Math.floor((x - safeMargin) / safeCellSize);
 
         if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
             this.gameState.placeTile(row, col);
@@ -618,80 +712,13 @@ class GameRenderer {
 // Initialize the game when the page loads
 window.addEventListener('load', () => {
     const canvas = document.getElementById('gameCanvas');
-    const container = document.querySelector('.game-container');
 
-    // Calculate dimensions based on grid size and container
-    const aspectRatio = COLS / ROWS;
-    const maxWidth = container.clientWidth - 40;
-    const maxHeight = window.innerHeight * 0.7;
-    const scale = Math.min(maxWidth / (COLS * CELL_SIZE), maxHeight / (ROWS * CELL_SIZE));
-
-    // Set canvas dimensions
-    canvas.width = COLS * CELL_SIZE * scale * window.devicePixelRatio;
-    canvas.height = ROWS * CELL_SIZE * scale * window.devicePixelRatio;
-    canvas.style.width = `${COLS * CELL_SIZE * scale}px`;
-    canvas.style.height = `${ROWS * CELL_SIZE * scale}px`;
-
-    // Configure context
-    const ctx = canvas.getContext('2d');
-    ctx.scale(scale * window.devicePixelRatio, scale * window.devicePixelRatio);
+    // Create game state and renderer
     const gameState = new GameState();
     const renderer = new GameRenderer(canvas, gameState);
+
+    // The GameRenderer will handle all canvas sizing and scaling
 });
 
-// Game loop with FPS control
-let lastTime = 0;
-let accumulator = 0;
-
-function gameLoop(timestamp) {
-    const deltaTime = timestamp - lastTime;
-    lastTime = timestamp;
-
-    accumulator += deltaTime;
-
-    while (accumulator >= FRAME_TIME) {
-        updateGameState();
-        accumulator -= FRAME_TIME;
-    }
-
-    render();
-    requestAnimationFrame(gameLoop);
-}
-
-// Mobile touch handling
-function handleTouchStart(e) {
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    handleInput(x, y);
-}
-
-// Initialize mobile controls
-canvas.addEventListener('touchstart', handleTouchStart);
-canvas.addEventListener('touchmove', handleTouchStart);
-
-// Start the optimized game loop
-requestAnimationFrame(gameLoop);
-
-// Initialize canvas with device pixel ratio scaling
-function initCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = (COLS * CELL_SIZE) + BOARD_MARGIN * 2;
-    canvas.height = (ROWS * CELL_SIZE) + BOARD_MARGIN * 2;
-
-    // Set actual size in memory (scaled for retina displays)
-    canvas.style.width = canvas.width + 'px';
-    canvas.style.height = canvas.height + 'px';
-    canvas.width = canvas.width * dpr;
-    canvas.height = canvas.height * dpr;
-
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-}
-
-// Prevent touch scroll interference
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-}, { passive: false });
+// The game is now fully managed by the GameRenderer class
+// No need for separate game loop or event handlers
