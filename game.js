@@ -90,20 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function addOrbAndChainReaction(index, player) {
         const originalPlayer = board[index].player;
-        const isConversion = originalPlayer !== null && originalPlayer !== player;
-
         board[index].orbs++;
         board[index].player = player;
         updateBoard();
 
-        const threshold = getThreshold();
-        let shouldExplode = board[index].orbs >= threshold;
-
-        if (isConversion && board[index].orbs === 3) {
-            shouldExplode = true;
-        }
-
-        if (!shouldExplode) {
+        if (board[index].orbs < getThreshold()) {
             return;
         }
 

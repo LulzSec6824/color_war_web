@@ -1,5 +1,7 @@
 # 🎨 Color War - A Cross-Platform Mobile Game 🎮
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/35808974-bb78-41a1-92a6-3bfbf6f246de/deploy-status)](https://app.netlify.com/projects/wasmrust/deploys)
+
 ## 🌟 Overview
 
 This is a web-based, cross-platform mobile game for Android and iOS, built with interactive gameplay. The game is developed using HTML, CSS, and vanilla JavaScript, making it lightweight and easy to package for mobile platforms using tools like Cordova or Capacitor.
