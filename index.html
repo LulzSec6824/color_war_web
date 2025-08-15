@@ -12,7 +12,13 @@
 </head>
 
 <body>
-    <div class="game-container">
+    <div id="player-selection">
+        <h1>Select Number of Players</h1>
+        <button onclick="startGame(2)">2 Players</button>
+        <button onclick="startGame(3)">3 Players</button>
+        <button onclick="startGame(4)">4 Players</button>
+    </div>
+    <div class="game-container" style="display: none;">
         <div id="turnMessage" class="turn-message"></div>
         <h1 class="game-title">Color War - Chain Reaction</h1>
         <div id="game-board" class="game-board"></div>

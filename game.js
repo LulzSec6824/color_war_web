@@ -1,12 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const gameBoard = document.getElementById('game-board');
     const turnMessage = document.getElementById('turnMessage');
+    const playerSelection = document.getElementById('player-selection');
+    const gameContainer = document.querySelector('.game-container');
     const cols = 8;
     const rows = 10;
-    const num_players = 4;
-    let players = Array.from({ length: num_players }, (_, i) => i + 1);
-    let currentPlayerIndex = 0;
-    let board = Array(rows * cols).fill(null).map(() => ({ orbs: 0, player: null }));
+    let num_players;
+    let players;
+    let currentPlayerIndex;
+    let board;
     let playerColors = {
         1: '#ff4136',
         2: '#2ecc40',
@@ -22,6 +24,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let isAnimating = false;
     let placementPhase = true;
     let initialPlacements = 0;
+
+    window.startGame = function(selectedPlayers) {
+        num_players = selectedPlayers;
+        players = Array.from({
+            length: num_players
+        }, (_, i) => i + 1);
+        currentPlayerIndex = 0;
+        board = Array(rows * cols).fill(null).map(() => ({
+            orbs: 0,
+            player: null
+        }));
+
+        playerSelection.style.display = 'none';
+        gameContainer.style.display = 'block';
+
+        createBoard();
+        updateTurnMessage();
+    }
 
     function getThreshold() {
         return 4;
@@ -107,12 +127,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await new Promise(resolve => setTimeout(resolve, 50)); // short pause
 
-        const neighbors = [
-            { dx: -1, dy: 0, animation: 'explode-left' },
-            { dx: 1, dy: 0, animation: 'explode-right' },
-            { dx: 0, dy: -1, animation: 'explode-up' },
-            { dx: 0, dy: 1, animation: 'explode-down' }
-        ];
+        const neighbors = [{
+            dx: -1,
+            dy: 0,
+            animation: 'explode-left'
+        }, {
+            dx: 1,
+            dy: 0,
+            animation: 'explode-right'
+        }, {
+            dx: 0,
+            dy: -1,
+            animation: 'explode-up'
+        }, {
+            dx: 0,
+            dy: 1,
+            animation: 'explode-down'
+        }];
 
         const sourceCell = document.querySelector(`[data-index="${index}"]`);
 
@@ -217,7 +248,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return false;
     }
-
-    createBoard();
-    updateTurnMessage();
 });
