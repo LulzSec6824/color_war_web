@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+
+    themeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        if (body.classList.contains('dark-mode')) {
+            themeToggle.classList.remove('fa-moon');
+            themeToggle.classList.add('fa-sun');
+        } else {
+            themeToggle.classList.remove('fa-sun');
+            themeToggle.classList.add('fa-moon');
+        }
+    });
+
     const gameBoard = document.getElementById('game-board');
     const turnMessage = document.getElementById('turnMessage');
     const playerSelection = document.getElementById('player-selection');
@@ -25,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let placementPhase = true;
     let initialPlacements = 0;
 
-    window.startGame = function(selectedPlayers) {
+    window.startGame = function (selectedPlayers) {
         num_players = selectedPlayers;
         players = Array.from({
             length: num_players

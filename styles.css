@@ -14,7 +14,8 @@
 }
 
 #player-selection button {
-    background-color: #0074d9; /* Blue */
+    background-color: #0074d9;
+    /* Blue */
     border: none;
     color: white;
     padding: 15px 32px;
@@ -29,7 +30,8 @@
 }
 
 #player-selection button:hover {
-    background-color: #0056b3; /* Darker Blue */
+    background-color: #0056b3;
+    /* Darker Blue */
 }
 
 /* Basic Styles */

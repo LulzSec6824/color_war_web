@@ -1,0 +1,65 @@
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+body.dark-mode #player-selection {
+    background-color: #1e1e1e;
+    border-color: #ffffff;
+}
+
+body.dark-mode #player-selection h1 {
+    color: #ffffff;
+}
+
+body.dark-mode #player-selection button {
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+}
+
+body.dark-mode #player-selection button:hover {
+    background-color: #555555;
+}
+
+body.dark-mode .game-container {
+    background-color: #1e1e1e;
+    border-color: #ffffff;
+    color: #ffffff;
+}
+
+body.dark-mode .game-title {
+    color: #ffffff;
+}
+
+body.dark-mode .turn-message {
+    background-color: #1e1e1e;
+    border-color: #ffffff;
+    color: #ffffff;
+}
+
+.theme-switcher {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+}
+
+#theme-toggle {
+    font-size: 1.5rem;
+    color: #333;
+}
+
+body.dark-mode #theme-toggle {
+    color: #ffffff;
+}
+
+body.dark-mode .game-board {
+    background-color: #ccc;
+    border: 2px solid #000;
+}
+
+body.dark-mode .cell {
+    background-color: #888;
+}
