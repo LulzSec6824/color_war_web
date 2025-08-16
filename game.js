@@ -17,8 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const turnMessage = document.getElementById('turnMessage');
     const playerSelection = document.getElementById('player-selection');
     const gameContainer = document.querySelector('.game-container');
-    const cols = 8;
-    const rows = 10;
+    const welcomeMessage = document.getElementById('welcome-message');
+    const winnerDisplay = document.getElementById('winner-display');
+    let cols = 8;
+    let rows = 10;
     let num_players;
     let players;
     let currentPlayerIndex;
@@ -41,6 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.startGame = function (selectedPlayers) {
         num_players = selectedPlayers;
+        if (num_players === 2) {
+            cols = 6;
+            rows = 7;
+        } else {
+            cols = 8;
+            rows = 10;
+        }
+
         players = Array.from({
             length: num_players
         }, (_, i) => i + 1);
@@ -51,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
 
         playerSelection.style.display = 'none';
+        welcomeMessage.style.display = 'none';
         gameContainer.style.display = 'block';
 
         createBoard();
@@ -63,6 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createBoard() {
         gameBoard.innerHTML = '';
+        gameBoard.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        gameBoard.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        gameBoard.style.aspectRatio = `${cols} / ${rows}`;
         for (let i = 0; i < rows * cols; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
@@ -247,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (board.some(c => c.player) && boardPlayers.size === 1) {
             const winner = boardPlayers.values().next().value;
-            turnMessage.textContent = `${playerNames[winner]} wins!`;
+            winnerDisplay.textContent = `${playerNames[winner]} wins!`;
             turnMessage.style.backgroundColor = playerColors[winner];
             turnMessage.style.color = (winner === 4) ? '#333' : 'white';
 

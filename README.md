@@ -13,18 +13,19 @@ This is a web-based, cross-platform mobile game for Android and iOS, built with 
 - **Interactive Gameplay**: Engage in a dynamic and strategic battle for board dominance.
 - **Visually Engaging Animations**: Smooth animations for circle division and other game events.
 - **Sequential Division**: Trigger cascading chain reactions to take over the board.
+- **Theme Toggle**: Switch between a green theme and a dark mode.
+- **Responsive Design**: The game is designed to be responsive and playable on different screen sizes.
 
-## 📜 Game Rules
+## 📜 How to Play
 
 ### 🛠️ Game Setup & Core Mechanics
 
-1. **Initial Placement**: At the start of the game, each player selects a designated "box" on the 8x10 game board. The initial circle placed in this box will begin with 3 "power" (pow).
-2. **Circle Division**: When a circle accumulates 4 power, it divides into 4 new circles, each with 1 power. The original box from which the division occurred will become empty.
-3. **Division Animation**: A visually engaging animation shows the new circles emanating from the main circle, moving simultaneously in up, down, left, and right directions.
-4. **Placement Restriction**: After the initial circle selection phase, players are prohibited from placing new circles in any empty box.
+1. **Select Number of Players**: Choose between 2, 3, or 4 players.
+2. **Initial Placement**: At the start of the game, each player selects a designated "box" on the game board. The initial circle placed in this box will begin with 3 "power" (pow).
+3. **Adding Power**: On your turn, you can only add power to your own circles. Click on one of your circles to add 1 power to it.
+4. **Circle Division**: When a circle accumulates 4 power, it divides into 4 new circles, each with 1 power. The original box from which the division occurred will become empty.
 5. **Circle Conversion**: If a player's circle is hit by an opponent's circle, it converts to the opponent's color. If the converted circle has 3 power, it immediately divides according to the opponent's circle division logic.
-6. **Power Increment**: Players can only interact with and add 1 power to circles that match their designated color. Once a player's colored circle reaches 4 power, it must follow the division rules.
-7. **Sequential Division**: A sequential division mechanism is implemented. After an initial circle divides, any adjacent circles that subsequently reach 4 power will divide in a cascading sequence.
+6. **Sequential Division**: A sequential division mechanism is implemented. After an initial circle divides, any adjacent circles that subsequently reach 4 power will divide in a cascading sequence.
 
 ### 🏆 Winning
 
@@ -34,7 +35,8 @@ This is a web-based, cross-platform mobile game for Android and iOS, built with 
 ## 🖥️ User Interface & Experience
 
 - **Turn Indicator**: The current player's turn is clearly displayed.
-- **Turn End Notification**: A clear notification and visual cue indicates when a player's turn has ended.
+- **Winner Display**: The winner is displayed at the end of the game.
+- **Theme Toggle**: A theme toggle is available to switch between a green theme and a dark mode.
 
 ## 🎛️ Controls
 
@@ -46,7 +48,6 @@ To run the game locally, you need to serve the files using a local web server.
 
 1. Clone or download the repository.
 2. Navigate to the `color_war_web` directory in your terminal.
-
 3. Start a simple Python HTTP server:
 
     ```sh
@@ -54,6 +55,13 @@ To run the game locally, you need to serve the files using a local web server.
     ```
 
 4. Open your web browser and go to `http://localhost:8000`.
+
+## 🛠️ Technologies Used
+
+- **HTML5**
+- **CSS3**
+- **JavaScript (ES6+)**
+- **Font Awesome** (for icons)
 
 ## 📱 Cross-Platform Deployment
 
@@ -89,3 +97,7 @@ To package this web application as a native mobile app for Android and iOS, you 
     ```
 
     This will open the native projects in Android Studio and Xcode, where you can build and run the app on emulators or physical devices.
+
+## 📝 License
+
+This project is licensed under the GNU General Public License v3.0 License - see the [LICENSE](LICENSE) file for details.

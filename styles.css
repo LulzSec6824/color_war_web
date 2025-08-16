@@ -1,21 +1,20 @@
 /* Player Selection Screen */
 #player-selection {
-    background-color: white;
+    background-color: #e8f5e9;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    border: 2px solid #000;
+    border: 2px solid #2e7d32;
     text-align: center;
 }
 
 #player-selection h1 {
-    color: #333;
+    color: #1b5e20;
     margin-bottom: 20px;
 }
 
 #player-selection button {
-    background-color: #0074d9;
-    /* Blue */
+    background-color: #4caf50;
     border: none;
     color: white;
     padding: 15px 32px;
@@ -30,14 +29,13 @@
 }
 
 #player-selection button:hover {
-    background-color: #0056b3;
-    /* Darker Blue */
+    background-color: #388e3c;
 }
 
-/* Basic Styles */
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #f0f0f0;
+    background-color: #dcedc8;
+    /* Light green background */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -47,28 +45,27 @@ body {
 }
 
 .game-container {
-    background-color: white;
+    background-color: #e8f5e9;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    border: 2px solid #000;
+    border: 2px solid #2e7d32;
     position: relative;
     width: 90vw;
     max-width: 500px;
 }
 
 .game-title {
-    color: #333;
+    color: #1b5e20;
     text-align: center;
     margin-bottom: 20px;
     font-size: 1.5rem;
 }
 
-/* Turn Message Bubble */
 .turn-message {
-    background: white;
+    background: #a5d6a7;
     padding: 10px 20px;
-    border: 2px solid #000;
+    border: 2px solid #2e7d32;
     border-radius: 25px;
     font-weight: bold;
     white-space: nowrap;
@@ -138,7 +135,6 @@ body {
     color: #333;
 }
 
-/* Orb Animation */
 @keyframes explode-up {
     0% {
         transform: translate(-50%, -50%);
@@ -195,7 +191,6 @@ body {
     }
 }
 
-/* Responsive Design */
 @media (max-width: 600px) {
     .game-container {
         width: 95vw;
@@ -215,4 +210,37 @@ body {
     .orb {
         font-size: 1rem;
     }
+}
+
+@media (max-width: 400px) {
+    #player-selection button {
+        display: block;
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .game-title {
+        font-size: 1rem;
+    }
+
+    .turn-message {
+        font-size: 0.8rem;
+    }
+
+    .orb {
+        font-size: 0.8rem;
+    }
+}
+
+
+#welcome-message h1 {
+    color: #1b5e20;
+    text-align: center;
+}
+
+#winner-display {
+    color: #1b5e20;
+    text-align: center;
+    font-size: 1.5rem;
+    margin-top: 20px;
 }
