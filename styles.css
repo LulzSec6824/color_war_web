@@ -110,13 +110,66 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: white;
+}
+
+.dots-container {
+    position: relative;
+    width: 80%;
+    height: 80%;
+}
+
+.dot {
+    width: 25%;
+    height: 25%;
+    border-radius: 100%;
+    position: absolute;
+}
+
+/* 1 orb */
+.dots-container[data-orbs="1"] .dot:nth-child(1) {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* 2 orbs */
+.dots-container[data-orbs="2"] .dot:nth-child(1) {
+    top: 50%;
+    left: 25%;
+    transform: translate(-50%, -50%);
+}
+
+.dots-container[data-orbs="2"] .dot:nth-child(2) {
+    top: 50%;
+    left: 75%;
+    transform: translate(-50%, -50%);
+}
+
+/* 3 orbs */
+.dots-container[data-orbs="3"] .dot:nth-child(1) {
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.dots-container[data-orbs="3"] .dot:nth-child(2) {
+    top: 75%;
+    left: 25%;
+    transform: translate(-50%, -50%);
+}
+
+.dots-container[data-orbs="3"] .dot:nth-child(3) {
+    top: 75%;
+    left: 75%;
+    transform: translate(-50%, -50%);
 }
 
 .player-1 {
     background-color: #ff4136;
+}
+
+.player-1 .dot {
+    background-color: white;
 }
 
 /* Red */
@@ -124,15 +177,26 @@ body {
     background-color: #2ecc40;
 }
 
+.player-2 .dot {
+    background-color: white;
+}
+
 /* Green */
 .player-3 {
     background-color: #0074d9;
 }
 
+.player-3 .dot {
+    background-color: white;
+}
+
 /* Blue */
 .player-4 {
     background-color: #ffdc00;
-    color: #333;
+}
+
+.player-4 .dot {
+    background-color: #333;
 }
 
 @keyframes explode-up {

@@ -45,10 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
         num_players = selectedPlayers;
         if (num_players === 2) {
             cols = 6;
-            rows = 7;
+            rows = 6;
         } else {
             cols = 8;
-            rows = 10;
+            rows = 8;
         }
 
         players = Array.from({
@@ -203,7 +203,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.classList.add('occupied');
                 const orb = document.createElement('div');
                 orb.classList.add('orb', `player-${cellData.player}`);
-                orb.textContent = cellData.orbs;
+
+                const dotsContainer = document.createElement('div');
+                dotsContainer.classList.add('dots-container');
+                dotsContainer.dataset.orbs = cellData.orbs;
+
+                for (let i = 0; i < cellData.orbs; i++) {
+                    const dot = document.createElement('div');
+                    dot.classList.add('dot');
+                    dotsContainer.appendChild(dot);
+                }
+
+                orb.appendChild(dotsContainer);
                 cell.appendChild(orb);
             } else {
                 cell.classList.remove('occupied');
@@ -238,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
             turnMessage.textContent = `${playerName}, select your start box.`;
             turnMessage.style.backgroundColor = playerColors[currentPlayer];
             turnMessage.style.color = (currentPlayer === 4) ? '#333' : 'white';
+            document.body.style.backgroundColor = playerColors[currentPlayer];
             turnMessage.classList.add('flash');
             setTimeout(() => {
                 turnMessage.classList.remove('flash');
@@ -247,9 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (players.length <= 1) return;
         const currentPlayer = players[currentPlayerIndex];
         const playerName = playerNames[currentPlayer];
-        turnMessage.textContent = `${playerName} player's turn - Place your tile!`;
+        turnMessage.textContent = `${playerName} player\'s turn - Place your tile!`;
         turnMessage.style.backgroundColor = playerColors[currentPlayer];
         turnMessage.style.color = (currentPlayer === 4) ? '#333' : 'white';
+        document.body.style.backgroundColor = playerColors[currentPlayer];
         turnMessage.classList.add('flash');
         setTimeout(() => {
             turnMessage.classList.remove('flash');
@@ -264,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             winnerDisplay.textContent = `${playerNames[winner]} wins!`;
             turnMessage.style.backgroundColor = playerColors[winner];
             turnMessage.style.color = (winner === 4) ? '#333' : 'white';
+            document.body.style.backgroundColor = playerColors[winner];
 
             // Disable further clicks
             const cells = document.querySelectorAll('.cell');
