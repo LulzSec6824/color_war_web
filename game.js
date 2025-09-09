@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameContainer = document.querySelector('.game-container');
     const welcomeMessage = document.getElementById('welcome-message');
     const winnerDisplay = document.getElementById('winner-display');
+    const themeSwitcher = document.querySelector('.theme-switcher');
     const evaluationBoxes = [
         document.getElementById('evaluation-box-1'),
         document.getElementById('evaluation-box-2'),
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playerSelection.style.display = 'none';
         welcomeMessage.style.display = 'none';
         gameContainer.style.display = 'block';
+        themeSwitcher.style.display = 'none';
 
         createBoard();
         updateTurnMessage();
