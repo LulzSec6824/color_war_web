@@ -19,10 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameContainer = document.querySelector('.game-container');
     const welcomeMessage = document.getElementById('welcome-message');
     const winnerDisplay = document.getElementById('winner-display');
+    const evaluationBoxes = [
+        document.getElementById('evaluation-box-1'),
+        document.getElementById('evaluation-box-2'),
+        document.getElementById('evaluation-box-3'),
+        document.getElementById('evaluation-box-4')
+    ];
     let cols = 8;
     let rows = 10;
     let num_players;
     let players;
+    let initialPlayers;
     let currentPlayerIndex;
     let board;
     let playerColors = {
@@ -54,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         players = Array.from({
             length: num_players
         }, (_, i) => i + 1);
+        initialPlayers = [...players];
         currentPlayerIndex = 0;
         board = Array(rows * cols).fill(null).map(() => ({
             orbs: 0,
@@ -66,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         createBoard();
         updateTurnMessage();
+        updateEvaluationBoxes();
     }
 
     function getThreshold() {
@@ -220,6 +229,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.classList.remove('occupied');
             }
         });
+        updateScores();
+    }
+
+    function updateEvaluationBoxes() {
+        evaluationBoxes.forEach(box => box.style.display = 'none');
+
+        for (let i = 0; i < num_players; i++) {
+            const player = players[i];
+            let boxIndex = i;
+            if (num_players === 2 && i === 1) {
+                boxIndex = 3; // Player 2 gets box 4 (index 3) for opposite corner
+            }
+
+            const box = evaluationBoxes[boxIndex];
+            if (box) {
+                box.style.display = 'block';
+                box.style.backgroundColor = playerColors[player];
+                box.style.color = (player === 4) ? '#333' : 'white';
+                box.textContent = '0';
+            }
+        }
+    }
+
+    function updateScores() {
+        const scores = {};
+        initialPlayers.forEach(p => scores[p] = 0);
+
+        for (const cell of board) {
+            if (cell.player) {
+                scores[cell.player] += cell.orbs;
+            }
+        }
+
+        initialPlayers.forEach((player, i) => {
+            let boxIndex = i;
+            if (num_players === 2 && i === 1) {
+                boxIndex = 3;
+            }
+
+            const box = evaluationBoxes[boxIndex];
+            if (box) {
+                if (players.includes(player)) {
+                    box.textContent = scores[player] || 0;
+                } else {
+                    box.style.display = 'none';
+                }
+            }
+        });
     }
 
     function nextTurn() {
@@ -233,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (players.length > 1 && activePlayers.length < players.length && board.some(c => c.player)) {
             players = players.filter(p => activePlayers.includes(p));
+            updateScores();
         }
 
         if (players.length <= 1) return;
@@ -259,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (players.length <= 1) return;
         const currentPlayer = players[currentPlayerIndex];
         const playerName = playerNames[currentPlayer];
-        turnMessage.textContent = `${playerName} player\'s turn - Place your tile!`;
+        turnMessage.textContent = `${playerName} player\'s turn`;
         turnMessage.style.backgroundColor = playerColors[currentPlayer];
         turnMessage.style.color = (currentPlayer === 4) ? '#333' : 'white';
         document.body.style.backgroundColor = playerColors[currentPlayer];
@@ -286,6 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.parentNode.replaceChild(newCell, cell);
             });
             players = [winner];
+            updateScores();
             return true;
         }
         return false;
